@@ -8,6 +8,7 @@ composeFoundation = "1.2.1"
 wearToolingPreview = "1.0.0"
 activityCompose = "1.11.0"
 coreSplashscreen = "1.0.1"
+ksp = "2.0.21-1.0.20" # <-- ADDED THIS KSP VERSION
 
 [libraries]
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
@@ -28,4 +29,4 @@ core-splashscreen = { group = "androidx.core", name = "core-splashscreen", versi
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" } # <-- ADDED THIS KSP PLUGIN ALIAS

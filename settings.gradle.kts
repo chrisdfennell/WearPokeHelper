@@ -8,6 +8,7 @@ pluginManagement {
             }
         }
         mavenCentral()
+        // Ensure Gradle Plugin Portal is listed HERE
         gradlePluginPortal()
     }
 }
@@ -16,8 +17,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // You might need mavenCentral() here too if any regular dependencies rely on it
     }
 }
 
-rootProject.name = "WearPokeHelper"
+rootProject.name = "WearPokeHelper" // Or WearPokeHelper2, match your project folder
 include(":app")
