@@ -37,10 +37,8 @@ android {
     }
 
     // Compose compiler extension; align with your Compose libs
-    // Note: The composeBom 2024.09.00 uses compiler 1.5.14.
-    // Let's update this to match.
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14" // <-- UPDATED from 1.7.3
+        kotlinCompilerExtensionVersion = "1.5.14" // Keep aligned with BOM
     }
 
     // Java/Kotlin toolchains
@@ -50,6 +48,8 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+        // Ensure warnings are NOT treated as errors
+        allWarningsAsErrors = false
     }
     kotlin {
         jvmToolchain(17)
@@ -64,23 +64,31 @@ android {
 }
 
 dependencies {
-    // --- Your existing, catalog-driven dependencies ---
+    // --- Wear specific dependencies ---
     implementation(libs.play.services.wearable)
+    implementation(libs.compose.material)       // Wear Compose Material (M2 based)
+    implementation(libs.compose.foundation)     // Wear Compose Foundation
+    implementation(libs.wear.tooling.preview)
+    implementation("androidx.wear:wear-input:1.2.0")
+
+    // --- Core Compose dependencies (managed by BOM) ---
     implementation(platform(libs.compose.bom))
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
-    implementation(libs.compose.material)       // Expecting this to be androidx.wear.compose:compose-material
-    implementation(libs.compose.foundation)     // Expecting this to be androidx.wear.compose:compose-foundation
     implementation(libs.activity.compose)
     implementation(libs.core.splashscreen)
 
-    // --- Add Material 2 for TextField / TextFieldDefaults ---
-    implementation(libs.material) // <-- ADDED
-    // --- Remove Material3 ---
-    // implementation("androidx.compose.material3:material3:1.3.0") // <-- REMOVED
+    // --- Add back Core Material 2 for TextField ---
+    implementation(libs.material)
+    // --- Ensure Material 3 is NOT included ---
+    // implementation("androidx.compose.material3:material3:1.3.0")
 
-    // --- Lifecycle / ViewModel (Compose friendly) ---
+    // --- Material Icons (Needed for Mic, List, Close etc.) ---
+    implementation(libs.material.icons.core)
+    implementation(libs.material.icons.extended)
+
+    // --- Lifecycle / ViewModel ---
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
@@ -95,16 +103,12 @@ dependencies {
 
     // --- Moshi ---
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
-    // If you want Moshi codegen, enable KSP plugin above and uncomment this:
-    // ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    // ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1") // If using KSP
 
-    // --- Wear Input helpers (rotary, etc.) ---
-    implementation("androidx.wear:wear-input:1.2.0")
-
-    // --- Tooling / Testing ---
-    implementation(libs.wear.tooling.preview)
+    // --- Testing ---
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
 }
+

@@ -5,11 +5,13 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.size // Import size modifier
+import androidx.compose.material.icons.Icons // Standard material icons
+import androidx.compose.material.icons.filled.List // Import List icon
+import androidx.compose.material.icons.filled.Mic // Import Mic icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.material.*
 
 @Composable
@@ -32,7 +34,21 @@ fun VoiceSearchChip(onResult: (String) -> Unit, modifier: Modifier = Modifier) {
             }
             launcher.launch(intent)
         },
-        label = { Text("🎤 Voice Search") },
+        label = {
+            Text(
+                "Voice Search",
+                maxLines = 1, // Ensure single line
+                overflow = TextOverflow.Ellipsis // Handle overflow
+            )
+        },
+        icon = { // Add Mic icon
+            Icon(
+                imageVector = Icons.Filled.Mic,
+                contentDescription = "Voice Search",
+                modifier = Modifier.size(ChipDefaults.IconSize) // Use default Chip icon size
+            )
+        },
+        colors = ChipDefaults.primaryChipColors(), // Use primary colors
         modifier = modifier
     )
 }
@@ -41,8 +57,28 @@ fun VoiceSearchChip(onResult: (String) -> Unit, modifier: Modifier = Modifier) {
 fun VersionPickerChip(current: String?, onPick: () -> Unit, modifier: Modifier = Modifier) {
     Chip(
         onClick = onPick,
-        label = { Text(current?.replace("-", " ")?.replaceFirstChar { it.titlecase() } ?: "All Versions") },
-        secondaryLabel = { Text("Game Version") },
+        label = {
+            Text(
+                current?.replace("-", " ")?.replaceFirstChar { it.titlecase() } ?: "All Versions",
+                maxLines = 1, // Ensure single line
+                overflow = TextOverflow.Ellipsis // Handle overflow
+            )
+        },
+        secondaryLabel = {
+            Text(
+                "Game Version",
+                maxLines = 1, // Ensure single line
+                overflow = TextOverflow.Ellipsis // Handle overflow
+            )
+        },
+        icon = { // Add List icon
+            Icon(
+                imageVector = Icons.Default.List,
+                contentDescription = "Select game version",
+                modifier = Modifier.size(ChipDefaults.IconSize) // Use default Chip icon size
+            )
+        },
+        colors = ChipDefaults.secondaryChipColors(), // Use secondary colors
         modifier = modifier
     )
 }
