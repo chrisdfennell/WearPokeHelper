@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Divider // Keep M2 Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import coil.compose.rememberAsyncImagePainter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,8 +63,7 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val uiState by vm.state.collectAsState()
                 val scalingLazyListState = rememberScalingLazyListState()
-
-                LaunchedEffect(Unit) {
+LaunchedEffect(Unit) {
                     vm.loadAllNames()
                     vm.loadVersions()
                 }
@@ -86,6 +86,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // Use ScalingLazyColumn for the main layout
                     ScalingLazyColumn(
+                        
+                        
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 12.dp), // Adjust padding as needed
@@ -156,15 +158,23 @@ class MainActivity : ComponentActivity() {
                             val filtered = uiState.filteredNames.take(20)
                             items(filtered.size) { idx ->
                                 val name = filtered[idx]
-                                Chip(
-                                    onClick = {
+                                
+Chip(
+                        onClick = {
                                         query = TextFieldValue("")
                                         vm.filterNames("")
                                         keyboardController?.hide()
                                         focusManager.clearFocus()
                                         scope.launch { vm.selectPokemon(name) }
                                     },
-                                    label = {
+                                    
+                                    icon = {
+                                        val id = vm.spriteIdFor(name)
+                                        if (id != null) {
+                                            Icon(painter = rememberAsyncImagePainter("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"), contentDescription = "pokemon sprite", modifier = Modifier.size(28.dp), tint = androidx.compose.ui.graphics.Color.Unspecified)
+                                        }
+                                    },
+                        label = {
                                         Text(
                                             name.replaceFirstChar { it.titlecase() },
                                             maxLines = 1,
@@ -239,7 +249,14 @@ class MainActivity : ComponentActivity() {
                                             analysis.examples.take(20).forEach { ex ->
                                                 Chip(
                                                     onClick = {},
-                                                    label = {
+                                                    
+                                                    icon = {
+                                                        val id = vm.spriteIdFor(ex)
+                                                        if (id != null) {
+                                                            Icon(painter = rememberAsyncImagePainter("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"), contentDescription = "pokemon sprite", modifier = Modifier.size(24.dp), tint = androidx.compose.ui.graphics.Color.Unspecified)
+                                                        }
+                                                    },
+                        label = {
                                                         Text(
                                                             ex.replaceFirstChar { it.titlecase() },
                                                             maxLines = 1,
@@ -264,9 +281,11 @@ class MainActivity : ComponentActivity() {
                         // Error message chip
                         item {
                             uiState.errorMessage?.let { msg ->
-                                Chip(
-                                    onClick = {},
-                                    label = {
+                                
+Chip(
+                        onClick = {},
+                                    
+                        label = {
                                         Text(
                                             msg,
                                             maxLines = 1,
@@ -344,7 +363,8 @@ class MainActivity : ComponentActivity() {
                                                     vm.clearVersionFilter()
                                                 }
                                             },
-                                            label = { Text("All Versions") },
+                                            
+                        label = { Text("All Versions") },
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }
@@ -360,7 +380,8 @@ class MainActivity : ComponentActivity() {
                                                     vm.selectVersion(v)
                                                 }
                                             },
-                                            label = {
+                                            
+                        label = {
                                                 Text(
                                                     // Remove unnecessary .toString()
                                                     v.replace("-", " ")

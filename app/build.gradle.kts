@@ -64,7 +64,13 @@ android {
 }
 
 dependencies {
-    // --- Wear specific dependencies ---
+    
+// --- Coil (image loading & caching) ---
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // --- WorkManager (optional sprite prefetch) ---
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+// --- Wear specific dependencies ---
     implementation(libs.play.services.wearable)
     implementation(libs.compose.material)       // Wear Compose Material (M2 based)
     implementation(libs.compose.foundation)     // Wear Compose Foundation

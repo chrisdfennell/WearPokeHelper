@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 // -------------------------------
 class Repository(private val api: PokeApi) {
     private var allNames: List<String> = emptyList()
+    private var nameToId: Map<String, Int> = emptyMap()
     private var versionNames: List<String> = emptyList()
 
     // Cache for species allowed per version
@@ -30,6 +31,11 @@ class Repository(private val api: PokeApi) {
         if (allNames.isEmpty()) {
             val res = api.listPokemon(limit = 2000)
             allNames = res.results.map { it.name }
+// Build name -> id map from resource URLs (which end with /pokemon/{id}/)
+nameToId = res.results.mapNotNull { r ->
+    val id = r.url.trimEnd('/').substringAfterLast('/').toIntOrNull()
+    if (id != null) r.name to id else null
+}.toMap()
         }
         allNames
     }
@@ -48,7 +54,9 @@ class Repository(private val api: PokeApi) {
         }
     }
 
-    // Suggests example Pokémon for a given attacking type
+fun getIdForName(name: String): Int? = nameToId[name.lowercase()]
+
+// Suggests example Pokémon for a given attacking type
     suspend fun suggestExamples(attackType: PokeType, limit: Int = 10): List<String> =
         withContext(Dispatchers.IO) {
             val list = api.getType(attackType.name).pokemon.map { it.pokemon.name }
@@ -102,6 +110,8 @@ data class UIState(
 // ViewModel
 // -------------------------------
 class PokeViewModel(private val repo: Repository) : ViewModel() {
+
+    fun spriteIdFor(name: String): Int? = repo.getIdForName(name)
 
     private val _state = MutableStateFlow(UIState(isLoading = true))
     val state = _state.asStateFlow()
