@@ -2,9 +2,13 @@ package com.fennell.wearpokehelper.data
 
 import com.squareup.moshi.JsonClass
 
-// Data classes for PokeAPI responses
+// ---------- Core PokeAPI DTOs ----------
+
 @JsonClass(generateAdapter = true)
-data class NamedApiResource(val name: String, val url: String)
+data class NamedApiResource(
+    val name: String,
+    val url: String
+)
 
 @JsonClass(generateAdapter = true)
 data class PokemonListResponse(
@@ -34,17 +38,23 @@ data class TypePokemonEntry(
     val pokemon: NamedApiResource
 )
 
-// Enum for Pokémon Types
+// ---------- Types / Analysis models ----------
+
+// Enum for Pokémon types (lowercase to match PokeAPI names exactly)
 enum class PokeType {
     normal, fire, water, electric, grass, ice,
-    fighting, poison, ground, flying, psychic,
-    bug, rock, ghost, dragon, dark, steel, fairy
+    fighting, poison, ground, flying,
+    psychic, bug, rock, ghost, dragon,
+    dark, steel, fairy
 }
 
-// Data class for type effectiveness analysis
-data class TypeMultiplier(val type: PokeType, val multiplier: Double)
+// Effectiveness result for a single attacking type vs target types
+data class TypeMultiplier(
+    val type: PokeType,
+    val multiplier: Double
+)
 
-// Data class for the final analysis result shown in the UI
+// Final analysis payload for the UI
 data class AnalysisResult(
     val targetName: String,
     val targetTypes: List<PokeType>,
@@ -52,7 +62,8 @@ data class AnalysisResult(
     val examples: List<String>
 )
 
-// Data classes for Version/Pokedex related API responses
+// ---------- Version / Pokedex DTOs ----------
+
 @JsonClass(generateAdapter = true)
 data class VersionListResponse(
     val count: Int,
