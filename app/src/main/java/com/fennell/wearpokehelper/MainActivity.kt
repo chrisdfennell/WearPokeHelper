@@ -2,14 +2,22 @@ package com.fennell.wearpokehelper
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.*
@@ -18,6 +26,7 @@ import com.fennell.wearpokehelper.data.PokeViewModel
 import com.fennell.wearpokehelper.ui.TypeBadge
 import com.fennell.wearpokehelper.ui.WearTheme
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,11 +39,15 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(Unit) {
                     vm.loadAllNames()
-                    vm.loadVersions() // <-- keep VM-based loader
+                    vm.loadVersions()
                 }
 
                 var query by remember { mutableStateOf(TextFieldValue("")) }
                 var showVersionPicker by remember { mutableStateOf(false) }
+
+                val keyboardController = LocalSoftwareKeyboardController.current
+                val focusManager = LocalFocusManager.current
+                var textFieldFocused by remember { mutableStateOf(false) }
 
                 Scaffold(
                     timeText = { TimeText() },
@@ -71,19 +84,38 @@ class MainActivity : ComponentActivity() {
                         Spacer(Modifier.height(6.dp))
                         Text("Which Pokémon are you fighting?", style = MaterialTheme.typography.caption3)
                         Spacer(Modifier.height(4.dp))
+
                         TextInput(
                             value = query.text,
                             onValueChange = { new ->
-                                query = TextFieldValue(new)
-                                vm.filterNames(new)
+                                val trimmed = new.trimEnd()
+                                query = TextFieldValue(trimmed)
+                                vm.filterNames(trimmed)
                             },
                             label = "Search",
-                            modifier = Modifier.fillMaxWidth()
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
+                                    val committed = query.text.trim()
+                                    if (committed != query.text) {
+                                        query = TextFieldValue(committed)
+                                    }
+                                    vm.filterNames(committed)
+                                }
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            onFocusChanged = { focused -> textFieldFocused = focused }
                         )
+
+                        BackHandler(enabled = textFieldFocused) {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
 
                         Spacer(Modifier.height(8.dp))
 
-                        // Show loader only when names aren’t ready at all
                         if (uiState.isLoading && uiState.filteredNames.isEmpty()) {
                             CircularProgressIndicator()
                         } else if (query.text.isNotEmpty() && uiState.selectedPokemonName == null) {
@@ -92,7 +124,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.fillMaxWidth(),
                                     autoCentering = AutoCenteringParams(itemIndex = 0)
                                 ) {
-                                    val filtered = uiState.filteredNames.take(10)
+                                    val filtered = uiState.filteredNames.take(20)
                                     items(filtered.size) { idx ->
                                         val name = filtered[idx]
                                         Chip(
@@ -101,7 +133,13 @@ class MainActivity : ComponentActivity() {
                                                 vm.filterNames("")
                                                 scope.launch { vm.selectPokemon(name) }
                                             },
-                                            label = { Text(name.replaceFirstChar { it.titlecase() }) },
+                                            label = {
+                                                Text(
+                                                    name.replaceFirstChar { it.titlecase() },
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            },
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }
@@ -144,29 +182,46 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                     Spacer(Modifier.height(6.dp))
+
                                     Text("Example counters:", style = MaterialTheme.typography.caption2)
                                     Spacer(Modifier.height(4.dp))
-                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        analysis.examples.take(6).chunked(3).forEach { row ->
-                                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                row.forEach { ex ->
-                                                    Chip(
-                                                        onClick = {},
-                                                        label = {
-                                                            Text(ex.replaceFirstChar { it.titlecase() })
-                                                        },
-                                                        colors = ChipDefaults.secondaryChipColors()
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        analysis.examples.take(20).forEach { ex ->
+                                            Chip(
+                                                onClick = {},
+                                                label = {
+                                                    Text(
+                                                        ex.replaceFirstChar { it.titlecase() },
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
                                                     )
-                                                }
-                                            }
+                                                },
+                                                colors = ChipDefaults.secondaryChipColors()
+                                            )
                                         }
                                     }
                                 }
                             }
                             Spacer(Modifier.height(10.dp))
                         }
+
+                        uiState.errorMessage?.let { msg ->
+                            Spacer(Modifier.height(6.dp))
+                            Chip(
+                                onClick = {},
+                                label = { Text(msg, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                colors = ChipDefaults.secondaryChipColors()
+                            )
+                        }
                     }
 
+                    // Version Picker Dialog
                     if (showVersionPicker) {
                         Alert(
                             title = { Text("Select Game Version") },
@@ -176,27 +231,39 @@ class MainActivity : ComponentActivity() {
                             positiveButton = {},
                             modifier = Modifier.fillMaxHeight(0.8f)
                         ) {
+                            val versionItems = remember(uiState.versions) { uiState.versions.toList() }
+
                             ScalingLazyColumn {
                                 item {
                                     Chip(
                                         onClick = {
-                                            showVersionPicker = false
-                                            scope.launch { vm.selectVersion(null) }
+                                            scope.launch {
+                                                // close dialog first
+                                                showVersionPicker = false
+                                                // wait one frame, then clear
+                                                yield()
+                                                vm.clearVersionFilter()
+                                            }
                                         },
                                         label = { Text("All Versions") },
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
-                                items(uiState.versions.size) { idx ->
-                                    val v = uiState.versions[idx]
+
+                                items(items = versionItems, key = { it }) { v ->
                                     Chip(
                                         onClick = {
-                                            showVersionPicker = false
-                                            scope.launch { vm.selectVersion(v) }
+                                            scope.launch {
+                                                showVersionPicker = false
+                                                yield()
+                                                vm.selectVersion(v)
+                                            }
                                         },
                                         label = {
-                                            Text(v.replace("-", " ")
-                                                .replaceFirstChar { it.titlecase() })
+                                            Text(
+                                                v.replace("-", " ").replaceFirstChar { it.titlecase() },
+                                                maxLines = 1
+                                            )
                                         },
                                         modifier = Modifier.fillMaxWidth()
                                     )
