@@ -119,6 +119,7 @@ class MainActivity : ComponentActivity() {
                         if (uiState.isLoading && uiState.filteredNames.isEmpty()) {
                             CircularProgressIndicator()
                         } else if (query.text.isNotEmpty() && uiState.selectedPokemonName == null) {
+                            // Suggestion list (limit height)
                             Column(modifier = Modifier.heightIn(max = 150.dp)) {
                                 ScalingLazyColumn(
                                     modifier = Modifier.fillMaxWidth(),
@@ -132,6 +133,9 @@ class MainActivity : ComponentActivity() {
                                                 query = TextFieldValue("")
                                                 vm.filterNames("")
                                                 scope.launch { vm.selectPokemon(name) }
+                                                // Clear focus after selection
+                                                focusManager.clearFocus()
+                                                keyboardController?.hide()
                                             },
                                             label = {
                                                 Text(
@@ -147,6 +151,7 @@ class MainActivity : ComponentActivity() {
                             }
                             Spacer(Modifier.height(8.dp))
                         }
+
 
                         uiState.analysis?.let { analysis ->
                             Card(
@@ -229,44 +234,54 @@ class MainActivity : ComponentActivity() {
                                 Button(onClick = { showVersionPicker = false }) { Text("Cancel") }
                             },
                             positiveButton = {},
-                            modifier = Modifier.fillMaxHeight(0.8f)
+                            modifier = Modifier.fillMaxHeight(0.8f) // ok to keep; we'll still bound inside
                         ) {
-                            val versionItems = remember(uiState.versions) { uiState.versions.toList() }
+                            // 👇 Give the list a bounded height (min/max) so ScalingLazyColumn is happy
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 120.dp, max = 260.dp) // tune for your watch; 220–260dp works well
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                val versionItems = remember(uiState.versions) { uiState.versions.toList() }
 
-                            ScalingLazyColumn {
-                                item {
-                                    Chip(
-                                        onClick = {
-                                            scope.launch {
-                                                // close dialog first
-                                                showVersionPicker = false
-                                                // wait one frame, then clear
-                                                yield()
-                                                vm.clearVersionFilter()
-                                            }
-                                        },
-                                        label = { Text("All Versions") },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
+                                ScalingLazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    autoCentering = AutoCenteringParams(itemIndex = 0)
+                                ) {
+                                    item {
+                                        Chip(
+                                            onClick = {
+                                                // close, yield a frame, then clear — avoids teardown race
+                                                scope.launch {
+                                                    showVersionPicker = false
+                                                    kotlinx.coroutines.yield()
+                                                    vm.clearVersionFilter()
+                                                }
+                                            },
+                                            label = { Text("All Versions") },
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
 
-                                items(items = versionItems, key = { it }) { v ->
-                                    Chip(
-                                        onClick = {
-                                            scope.launch {
-                                                showVersionPicker = false
-                                                yield()
-                                                vm.selectVersion(v)
-                                            }
-                                        },
-                                        label = {
-                                            Text(
-                                                v.replace("-", " ").replaceFirstChar { it.titlecase() },
-                                                maxLines = 1
-                                            )
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                    items(items = versionItems, key = { it }) { v ->
+                                        Chip(
+                                            onClick = {
+                                                scope.launch {
+                                                    showVersionPicker = false
+                                                    kotlinx.coroutines.yield()
+                                                    vm.selectVersion(v)
+                                                }
+                                            },
+                                            label = {
+                                                Text(
+                                                    v.replace("-", " ").replaceFirstChar { it.titlecase() },
+                                                    maxLines = 1
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
                                 }
                             }
                         }

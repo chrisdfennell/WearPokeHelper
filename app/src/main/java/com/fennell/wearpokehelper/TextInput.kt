@@ -2,9 +2,10 @@ package com.fennell.wearpokehelper
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+// Import from Material 2 (androidx.compose.material)
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.onFocusChanged
@@ -26,7 +27,8 @@ fun TextInput(
         onValueChange = onValueChange,
         label = { Text(label) },
         modifier = modifier.onFocusChanged { onFocusChanged(it.isFocused) },
-        colors = TextFieldDefaults.colors(),
+        // Use M2-compatible colors
+        colors = TextFieldDefaults.textFieldColors(),
         singleLine = singleLine,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions

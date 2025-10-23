@@ -37,8 +37,10 @@ android {
     }
 
     // Compose compiler extension; align with your Compose libs
+    // Note: The composeBom 2024.09.00 uses compiler 1.5.14.
+    // Let's update this to match.
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.7.3"
+        kotlinCompilerExtensionVersion = "1.5.14" // <-- UPDATED from 1.7.3
     }
 
     // Java/Kotlin toolchains
@@ -73,8 +75,10 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.core.splashscreen)
 
-    // --- Add Material3 for TextField / TextFieldDefaults ---
-    implementation("androidx.compose.material3:material3:1.3.0")
+    // --- Add Material 2 for TextField / TextFieldDefaults ---
+    implementation(libs.material) // <-- ADDED
+    // --- Remove Material3 ---
+    // implementation("androidx.compose.material3:material3:1.3.0") // <-- REMOVED
 
     // --- Lifecycle / ViewModel (Compose friendly) ---
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
